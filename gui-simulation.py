@@ -102,7 +102,7 @@ def sim_B(initial_wealth, T, dT, a, b, B_vals, n):
 
 st.title("Parameterization Tool")
 
-st.subheader("Some sample values: Initial Wealth = 1, a = 1, b = 1, dT = .01, n = 100, B = 3.5")
+st.subheader("Some sample values: Initial Wealth = 1, a = 1, T = 5 b = 1, dT = .01, n = 100, B = 3.5")
 
 iw = st.number_input("Enter Initial Wealth")
 a = st.number_input("Enter A")
