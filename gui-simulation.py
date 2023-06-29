@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import streamlit as st
-
 def gen_t(T, dT):
     t = []
     for i in range(int(T/dT)):
