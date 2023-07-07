@@ -111,8 +111,8 @@ b = st.number_input("Enter b")
 dT = st.number_input("Enter dT")
 n = st.number_input("Enter Simulation count")
 B = st.number_input("Enter B value")
-st.button("run", on_click=sim_B, args= (iw, T, dT, a, b, B_vals, int(n)))
-st.button("run instance", on_click=sim_wealth, args= (iw, T, dT, a, b, B))
+st.form_submit_button("run", on_click=sim_B, args= (iw, T, dT, a, b, B_vals, int(n)))
+st.form_submit_button("run instance", on_click=sim_wealth, args= (iw, T, dT, a, b, B))
 
 st.write("Made by George Nakhla")
 
