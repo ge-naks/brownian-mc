@@ -11,7 +11,7 @@ def gen_t(T, dT):
 def gen_x(initial_wealth, T, dT, a, b, B):
     x = [initial_wealth]
     overflow = [0]
-    period = 500
+    period = int(T/dT)
     for i in range(1, int(T/dT)):
         curr_x = 0
         curr_overflow = 0
