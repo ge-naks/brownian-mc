@@ -1,6 +1,28 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import streamlit as st
+
+
+if 'wealth_plot' not in st.session_state:
+    st.session_state.wealth_plot = None
+if 'wealth_text' not in st.session_state:
+    st.session_state.wealth_text = None
+if 'survival_plot' not in st.session_state:
+    st.session_state.survival_plot = None
+if 'optimize_plots' not in st.session_state:
+    st.session_state.optimize_plots = []
+if 'optimize_texts' not in st.session_state:
+    st.session_state.optimize_texts = []
+
+def clear_plots():
+    st.session_state.wealth_plot = None
+    st.session_state.wealth_text = None
+    st.session_state.survival_plot = None
+    st.session_state.optimize_plots = []
+    st.session_state.optimize_texts = []
+
+
+
 def gen_t(T, dT):
     t = []
     for i in range(int(T/dT)):
@@ -61,11 +83,11 @@ def run_B_for_avg(initial_wealth, T, dT, a, b, B):
 B_vals = [i * .1 for i in range(100)]
 
 def sim_wealth(initial_wealth, T, dT, a, b, B):
+    clear_plots()  # Clear existing plots first
     t = gen_t(T, dT)
     re = gen_x(initial_wealth, T, dT, a, b, B)
     x = re[0]
     overflow = re[1]
-
 
     while(len(x) != int(T/dT)):
         x.append(0)
@@ -73,32 +95,38 @@ def sim_wealth(initial_wealth, T, dT, a, b, B):
     while(len(overflow) != int(T/dT)):
         overflow.append(0)
     total_overflow = sum(overflow)
+    
     fig, ax = plt.subplots() 
     ax.plot(t, x)  
     ax.set_xlabel('T')
     ax.set_ylabel('Wealth')
     ax.set_title("Dynamic Wealth Evolution")
-
-    st.pyplot(fig)
-    st.text("Total Drawdown produced:" + str(total_overflow))
+    
+    # Store in session state
+    st.session_state.wealth_plot = fig
+    st.session_state.wealth_text = f"Total Drawdown produced: {total_overflow}"
 
 def sim_avg_per(initial_wealth, T, dT, a, b, B_vals, n):
-   all_period = [i * 0 for i in range(100)]
-   for i in range(n):
-       temp = run_B(initial_wealth, T, dT, a, b, B_vals)
-       avg_per = temp[1]
-       for j in range(len(avg_per)):
-           all_period[j] = all_period[j] + avg_per[j]
-   for i in range(len(all_period)):
-       all_period[i] = all_period[i] / n
-   fig, ax = plt.subplots()  
-   ax.plot(B_vals, all_period)  
-   ax.set_xlabel('B Values')
-   ax.set_ylabel('Average Periods Survived')
-   ax.set_title('Wealth Survivability')
-   st.pyplot(fig)
+    clear_plots()  # Clear existing plots first
+    all_period = [i * 0 for i in range(100)]
+    for i in range(n):
+        temp = run_B(initial_wealth, T, dT, a, b, B_vals)
+        avg_per = temp[1]
+        for j in range(len(avg_per)):
+            all_period[j] = all_period[j] + avg_per[j]
+    for i in range(len(all_period)):
+        all_period[i] = all_period[i] / n
+    fig, ax = plt.subplots()  
+    ax.plot(B_vals, all_period)  
+    ax.set_xlabel('B Values')
+    ax.set_ylabel('Average Periods Survived')
+    ax.set_title('Wealth Survivability')
+    
+    # Store in session state
+    st.session_state.survival_plot = fig
 
 def sim_B(initial_wealth, T, dT, a, b, B_vals, n):
+    clear_plots()
     avg_overflow = [i * 0 for i in range(100)]
     for i in range(n):
         temp = run_B(initial_wealth, T, dT, a, b, B_vals)
@@ -117,31 +145,32 @@ def sim_B(initial_wealth, T, dT, a, b, B_vals, n):
     bin_width = 50
     bins = range(0, max(data) + bin_width, bin_width)
     counts, _ = np.histogram(data, bins=bins)
-
-    plt.bar(bins[:-1], counts, width=bin_width)
-    plt.xlabel('Number of Survived Periods')
-    plt.ylabel('Frequency')
-    plt.title('B* Period Frequency')
+    
+    fig1, ax1 = plt.subplots()
+    ax1.bar(bins[:-1], counts, width=bin_width)
+    ax1.set_xlabel('Number of Survived Periods')
+    ax1.set_ylabel('Frequency')
+    ax1.set_title('B* Period Frequency')
     plt.xticks(fontsize=8)
 
-    st.pyplot(plt)  # Display the histogram
 
-    fig, ax = plt.subplots()  
-    ax.plot(B_vals, avg_overflow)  
-    ax.set_xlabel('B Values')
-    ax.set_ylabel('Average Overflow')
-    ax.set_title('B* Optimization')
+    fig2, ax2 = plt.subplots()  
+    ax2.plot(B_vals, avg_overflow)  
+    ax2.set_xlabel('B Values')
+    ax2.set_ylabel('Average Overflow')
+    ax2.set_title('B* Optimization')
+    
 
-    st.pyplot(fig)
-    st.text("Optimal B value is:" + str(optimal_B))
-    st.text("Produces max wealth of:" + str(max_x))
+    st.session_state.optimize_plots = [fig1, fig2]
+    st.session_state.optimize_texts = [
+        f"Optimal B value is: {optimal_B}",
+        f"Produces max wealth of: {max_x}"
+    ]
 
 st.title("Parameterization Tool")
 
 st.subheader("Some sample values have been already provided. You may change them as you wish!")
 st.subheader("Note: values of n > 1000 will take a significant amount of time to process. Please be patient")
-
-
 
 iw = st.number_input("Enter Initial Wealth", value=(1))
 a = st.number_input("Enter A", value=(1))
@@ -150,12 +179,30 @@ b = st.number_input("Enter b", value=(1))
 dT = st.number_input("Enter dT" , value=(.01))
 n = st.number_input("Enter Simulation count", value=(100))
 B = st.number_input("Enter B value", value=(2.5))
-st.button("Optimize B", on_click=sim_B, args= (iw, T, dT, a, b, B_vals, int(n)))
-st.button("Test One B", on_click=sim_wealth, args= (iw, T, dT, a, b, B))
-st.button("Simulate Average Survival", on_click=sim_avg_per, args= (iw, T, dT, a, b, B_vals, n))
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    if st.button("Optimize B"):
+        sim_B(iw, T, dT, a, b, B_vals, int(n))
+with col2:
+    if st.button("Test One B"):
+        sim_wealth(iw, T, dT, a, b, B)
+with col3:
+    if st.button("Simulate Average Survival"):
+        sim_avg_per(iw, T, dT, a, b, B_vals, n)
+
+if st.session_state.wealth_plot is not None:
+    st.pyplot(st.session_state.wealth_plot)
+    st.text(st.session_state.wealth_text)
+
+if st.session_state.survival_plot is not None:
+    st.pyplot(st.session_state.survival_plot)
+
+if st.session_state.optimize_plots:
+    for plot in st.session_state.optimize_plots:
+        st.pyplot(plot)
+    for text in st.session_state.optimize_texts:
+        st.text(text)
 
 st.write("Made by George Nakhla")
-
-
-
-
