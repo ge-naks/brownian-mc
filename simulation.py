@@ -2,8 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-sns.set_theme(style="whitegrid")
-
 def gen_wealth(initial_wealth, T, dT, a, b, ceiling):
     periods_survived = int(T / dT)
     wealth = np.zeros(periods_survived)
@@ -11,13 +9,12 @@ def gen_wealth(initial_wealth, T, dT, a, b, ceiling):
     overflow = 0
     noise = np.random.normal(0, np.sqrt(dT), periods_survived)
     for i in range(1, periods_survived):
-        dX = a * dT + b * noise[i]
-        curr_wealth = wealth[i - 1] + dX
+        d_wealth = a * dT + b * noise[i]
+        curr_wealth = wealth[i - 1] + d_wealth
 
         if curr_wealth > ceiling:
             overflow += curr_wealth - ceiling
-            curr_wealth = ceiling
-            wealth[i] = curr_wealth
+            wealth[i] = ceiling
         elif 0 < curr_wealth < ceiling:
             wealth[i] = curr_wealth
         else:
@@ -47,9 +44,9 @@ def optimize_ceiling(initial_wealth, T, dT, a, b, N, max_ceiling = 100, ceiling_
         curr_ceiling_overflow = 0
         curr_ceiling_survival = 0
         for _ in range(N):
-            iter_result = gen_wealth(initial_wealth, T, dT, a, b, ceilings[i])
-            curr_ceiling_overflow += iter_result[2]
-            curr_ceiling_survival += iter_result[1]
+            _, periods_survived, overflow = gen_wealth(initial_wealth, T, dT, a, b, ceilings[i])
+            curr_ceiling_overflow += overflow
+            curr_ceiling_survival += periods_survived
         overflow_per_ceiling[i] = curr_ceiling_overflow / N
         survival_per_ceiling[i] = curr_ceiling_survival / N
         if (curr_ceiling_overflow / N ) > avg_over_at_opt:
