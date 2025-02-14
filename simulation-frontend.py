@@ -21,6 +21,8 @@ def main():
     b = st.number_input("Parameter b", value=1)
     ceiling = st.number_input("Ceiling", value=2, min_value=1)
     N = st.number_input("Number of simulations for optimization", value=100, min_value=1)
+    max_ceiling = st.number_input("Maximum Ceiling Value", value=10, min_value=1)
+    step_size = st.number_input("Ceiling Step Size", value=0.1, min_value=.01)
 
     if st.button("Run Single Wealth Simulation"):
         clear_plots()
@@ -31,7 +33,7 @@ def main():
     # Run the optimize_ceiling function
     if st.button("Run Ceiling Optimization"):
         clear_plots()  # Clear any existing plots first
-        optimize_ceiling(initial_wealth, T, dT, a, b, N)
+        optimize_ceiling(initial_wealth, T, dT, a, b, N, max_ceiling, step_size)
         st.session_state.fig = plt.gcf()
         st.pyplot(st.session_state.fig)
 
